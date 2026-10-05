@@ -81,6 +81,19 @@ body {
 
 a { color: var(--accent-ink); }
 
+kbd {
+  font-family: var(--font-mono);
+  font-size: .8em;
+  line-height: 1.4;
+  color: var(--ink-2);
+  background: var(--bg-soft);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  padding: .05em .4em;
+  white-space: nowrap;
+}
+
 code {
   font-family: var(--font-mono);
   font-size: .86em;
