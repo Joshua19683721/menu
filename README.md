@@ -37,7 +37,7 @@ assets/js/app.js      搜尋、分類篩選、/ 快速聚焦
 ### 本機預覽
 
 ```powershell
-python -m http.server 8770
+python -m http.server 8770 --directory C:\Users\joshu\Downloads\menu
 # 開 http://127.0.0.1:8770/
 ```
 
@@ -49,6 +49,9 @@ push 到 `main` 之後，`.github/workflows/pages.yml` 會自動：
 2. **部署** —— 把 `_site/` 發佈到 GitHub Pages
 
 任何一關不過就不會上線。
+
+Pages 來源已設為 **GitHub Actions**；workflow 帶 `enablement: true`，
+所以就算倉庫還沒開過 Pages，第一次 push 也會自動開啟，不必先去設定頁手動點。
 
 ---
 

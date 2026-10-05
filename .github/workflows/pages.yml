@@ -57,6 +57,9 @@ jobs:
 
       - name: 設定 Pages
         uses: actions/configure-pages@v5
+        with:
+          # 倉庫還沒開過 Pages 時自動開啟（首次部署會用到）
+          enablement: true
 
       - name: 上傳網站內容
         uses: actions/upload-pages-artifact@v3
