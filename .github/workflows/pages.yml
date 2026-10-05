@@ -1,0 +1,68 @@
+name: Deploy menu to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: 檢查並部署
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- 部署前的三道閘門 ----------
+
+      - name: 必要檔案存在
+        run: |
+          set -euo pipefail
+          for f in index.html assets/css/app.css assets/js/app.js .nojekyll; do
+            test -e "$f" || { echo "::error::缺少 $f"; exit 1; }
+          done
+
+      - name: 沒有簡體字
+        run: |
+          set -euo pipefail
+          python3 tools/check_site.py
+
+      - name: 相對路徑不斷鏈
+        run: |
+          set -euo pipefail
+          python3 tools/check_links.py
+
+      - name: 組合 _site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp -r index.html assets .nojekyll README.md _site/
+
+      # ---------- 部署 ----------
+
+      - name: 設定 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上傳網站內容
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v4

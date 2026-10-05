@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>教學系統入口｜中文閱讀・寫作・英文學習</title>
+<meta name="description" content="中小學素養學習系統入口網站：收錄 5 套可直接使用的線上練習系統，分為中文能力（閱讀理解、寫作思辨）與英文能力（互動課本、輸入練習）兩大領域。">
+<meta name="theme-color" content="#1f2a44">
+<meta property="og:type" content="website">
+<meta property="og:title" content="教學系統入口｜中文閱讀・寫作・英文學習">
+<meta property="og:description" content="5 套純前端、可離線使用的中小學線上練習系統，分門別類整理於此。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%BE%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/css/app.css">
+<script>
+  // 先套用配色，避免整頁載入時閃一下另一套色。
+  // 網址帶 ?theme=light / ?theme=dark 優先（投影機等固定場合很好用），
+  // 否則用使用者上次在這頁按下的選擇，再否則交給系統設定。
+  try {
+    var q = new URLSearchParams(location.search).get('theme');
+    var saved = localStorage.getItem('menu-theme');
+    if (q === 'light' || q === 'dark') document.documentElement.dataset.theme = q;
+    else if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+  } catch (e) { /* localStorage 被停用就交給系統設定 */ }
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要內容</a>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Joshua19683721 · Teaching Toolkit</p>
+    <h1>中小學素養學習系統<span class="dot">・</span>入口</h1>
+    <p class="lede">
+      這裡是五套線上練習系統的總入口。全部是<b>純前端</b>製作：不需安裝、不需後端、不需帳號，
+      開瀏覽器就能用，資料與金鑰只留在自己這台電腦上。
+      依<b>中文能力</b>與<b>英文能力</b>兩大領域分類，直接點卡片就能進入。
+    </p>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input id="search" type="search" autocomplete="off" spellcheck="false"
+               placeholder="搜尋系統或功能，例如：音標、錯題本、會考、朗讀、寫作…"
+               aria-label="搜尋系統或功能">
+        <kbd>/</kbd>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="分類篩選">
+        <button class="chip is-active" data-filter="all">全部</button>
+        <button class="chip" data-filter="中文">中文能力</button>
+        <button class="chip" data-filter="閱讀">閱讀理解</button>
+        <button class="chip" data-filter="寫作">寫作思辨</button>
+        <button class="chip" data-filter="英文">英文能力</button>
+        <button class="chip" data-filter="課本">互動課本</button>
+        <button class="chip" data-filter="打字">輸入練習</button>
+      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" title="切換淺色／深色">
+        <span class="theme-icon" aria-hidden="true">☀️</span><span class="theme-label">淺色</span>
+      </button>
+    </div>
+
+    <ul class="stats">
+      <li><b>5</b><span>套線上系統</span></li>
+      <li><b>2</b><span>大能力領域</span></li>
+      <li><b>60</b><span>課英文互動課</span></li>
+      <li><b>5,685</b><span>個 A2 Key 練習單元</span></li>
+      <li><b>889</b><span>條口袋書單字</span></li>
+      <li><b>100%</b><span>官方詞表覆蓋率</span></li>
+    </ul>
+  </div>
+</header>
+
+<nav class="quicknav" aria-label="快速導覽">
+  <div class="wrap">
+    <span class="quicknav-label">快速前往</span>
+    <a href="#cat-zh">🇹🇼 中文能力</a>
+    <a href="#cat-en">🔤 英文能力</a>
+    <a href="#path">🧭 建議學習路徑</a>
+    <a href="#common">🔒 共同設計原則</a>
+    <a href="#about">ℹ️ 關於</a>
+  </div>
+</nav>
+
+<main id="main" class="wrap">
+
+  <p class="empty" id="empty" hidden>找不到符合「<span id="emptyTerm"></span>」的系統，換個關鍵字試試看。</p>
+
+  <!-- ============ 中文能力 ============ -->
+  <section class="category" id="cat-zh">
+    <header class="category-head">
+      <h2><span class="cat-icon" aria-hidden="true">🇹🇼</span>中文能力</h2>
+      <p>對應 108 課綱語文領域，兩套系統分別負責<b>讀</b>與<b>寫</b>。</p>
+    </header>
+
+    <div class="grid grid--2">
+
+      <article class="card" data-tags="中文 閱讀 理解 國小 六年級 素養 cot 思維鏈 語音 朗讀 解析 題庫">
+        <div class="card-badges">
+          <span class="badge badge-a">中文｜閱讀理解</span>
+          <span class="badge">國小六年級</span>
+          <span class="badge badge-ok">免安裝・不用 API</span>
+        </div>
+        <h3><span class="emoji" aria-hidden="true">📖</span>ReadExpress-CoT 閱讀快線</h3>
+        <p class="card-sub">國小素養版 · 靜態網頁版 · 純前端運算</p>
+        <p class="card-desc">
+          一篇文章配十階漸進提問，從「讀到什麼」一路帶到「你怎麼想」。
+          答題可以打字、也可以直接開口講，答錯不會被丟到下一題，而是停下來給一張逐題解析卡。
+        </p>
+        <ul class="features">
+          <li><b>8 大文章類別</b>：記敘抒情／說明科普／古典成語／現代詩／小說戲劇／臺灣文化／人物社會環境／寓言童話</li>
+          <li><b>10 階提問階梯</b>：細節理解 → 推論分析 → 省思評鑑，三層遞進</li>
+          <li><b>雙輸入容錯判定</b>：打字或語音辨識；數字優先解析、模糊比對有信賴門檻，判定不出來就交還給學生確認，<b>寧可重問也不猜錯</b></li>
+          <li><b>答錯必給解析</b>：說明「為什麼是這個答案」，可選擇再試一次或直接看正解</li>
+          <li><b>閱讀思考拼圖</b>：把十題答案組成一段反思，並展開 3 步驟 CoT 思維鏈</li>
+          <li><b>選項順序洗牌</b>：固定種子讓正解平均落在四個位置，不會永遠選 A；重整頁面位置也不跳動</li>
+          <li><b>語音全在本機</b>：瀏覽器端完成朗讀與辨識，學生的聲音不會上傳到任何伺服器；Firefox 自動停用語音並提示改用打字</li>
+        </ul>
+        <div class="card-foot">
+          <a class="btn" href="https://joshua19683721.github.io/c1/" target="_blank" rel="noopener noreferrer">進入系統 ↗</a>
+          <code class="url">joshua19683721.github.io/c1/</code>
+        </div>
+      </article>
+
+      <article class="card" data-tags="中文 寫作 作文 思辨 口述 會考 國小 四年級 llm groq 錯別字 繁體 隱私">
+        <div class="card-badges">
+          <span class="badge badge-b">中文｜寫作思辨</span>
+          <span class="badge">國小四年級</span>
+          <span class="badge badge-ok">Key 只存本機</span>
+        </div>
+        <h3><span class="emoji" aria-hidden="true">🎒</span>國文會考魔法寫作小幫手</h3>
+        <p class="card-sub">先說後寫 · 三步驟思辨練習 · 單檔 App</p>
+        <p class="card-desc">
+          孩子先開口把事情講出來（或直接打字），AI 導師再丟兩個引導問題把他往深處問，
+          最後產出一篇符合國中會考架構的 400～600 字作文，外加一張 Keep／Change 診斷卡。
+        </p>
+        <ul class="features">
+          <li><b>三步驟流程</b>：口述／輸入 → 蘇格拉底式提問 → 成稿與診斷卡，每一步都能回上一頁修改</li>
+          <li><b>4 個內建主題</b>：印象深刻的比賽、和朋友的誤會、最難忘的雨天、自訂主題</li>
+          <li><b>兩題引導分別對應</b>：五感與心理細節、轉折與因果關係；不滿意可以請導師換題</li>
+          <li><b>作文診斷卡</b>：做得很好的地方（Keep）、可以更好的地方（Change）、整理好的會考架構文章，並標示字數是否落在 400～600</li>
+          <li><b>錯別字雙層檢核</b>：內建字典 81 組零延遲先修（成語誤寫、同音字、台灣用語），再由國文老師 LLM 背景校對的／地／得、標點、語序、重複字詞</li>
+          <li data-audit="skip"><b>繁體中文保證</b>：程式層內建 1157 組逐字對照 + 60 組台灣慣用詞（软件→軟體、網絡→網路、視頻→影片），孩子用簡體字口述也不會冒出簡體</li>
+          <li><b>隱私</b>：Groq API Key 只存在本機瀏覽器 localStorage，沒有後端，作文內容不上傳；可複製、列印或存成 PDF</li>
+        </ul>
+        <div class="card-foot">
+          <a class="btn" href="https://joshua19683721.github.io/writing_system_framework/" target="_blank" rel="noopener noreferrer">進入系統 ↗</a>
+          <code class="url">joshua19683721.github.io/writing_system_framework/</code>
+          <span class="note">首次使用需在右上角貼上自己的 Groq API Key（免費申請）</span>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ 英文能力 ============ -->
+  <section class="category" id="cat-en">
+    <header class="category-head">
+      <h2><span class="cat-icon" aria-hidden="true">🔤</span>英文能力</h2>
+      <p>一條龍：先課本式加深理解，再用打字把會看的詞彙真正敲出來。</p>
+    </header>
+
+    <div class="grid">
+
+      <article class="card" data-tags="英文 閱讀 課本 教學 互動 a2 key 會考 108課綱 朗讀 翻譯 文法 故事">
+        <div class="card-badges">
+          <span class="badge badge-c">英文｜互動課本</span>
+          <span class="badge">國中會考範圍</span>
+          <span class="badge badge-ok">離線可用</span>
+        </div>
+        <h3><span class="emoji" aria-hidden="true">📚</span>A2 Key 與 108 課綱會考英文・60 課</h3>
+        <p class="card-sub">互動故事課本 · 逐句解讀 · 中文全文對照</p>
+        <p class="card-desc">
+          每一課都是一篇完整的三段式英文故事：句子可以點起來聽、可以指到哪裡就解釋哪裡的文法，
+          右邊有中文全文對照翻譯，底部有核心重點整理盒。六十課是一條連貫的路線，不是零散單元。
+        </p>
+        <ul class="features">
+          <li><b>60 課完整故事</b>：每課三段，句子逐句可點擊朗讀，滑鼠懸停即出文法解析</li>
+          <li><b>雙資料骨架</b>：詞彙用 Cambridge A2 Key Vocabulary List 的 25 個主題；文法依 108 課綱國中會考</li>
+          <li><b>涵蓋率可查</b>：內附兩張對照表——A2 Key 25 主題對照表、會考文法 67 考點對照表，每一格都能點進對應課次</li>
+          <li><b>三段式進階</b>：1～10 課基礎段考句型 → 11～30 課主題詞彙與中級句型 → 31～60 課進階句型、寫作升級與議題融入</li>
+          <li><b>議題寫作</b>：網路安全、AI 與學習、海洋塑膠、極端天氣、勞動權益、反霸凌等貼近生活的寫作練習</li>
+          <li><b>零相依</b>：樣式、腳本與 TTS 全部內嵌在頁面裡，下載後離線也能看</li>
+        </ul>
+        <div class="card-foot">
+          <a class="btn" href="https://joshua19683721.github.io/m1/" target="_blank" rel="noopener noreferrer">進入系統 ↗</a>
+          <code class="url">joshua19683721.github.io/m1/</code>
+        </div>
+      </article>
+
+      <article class="card" data-tags="英文 打字 輸入 練習 單字 片語 例句 盲打 a2 key 音標 詞性 錯題本 隨機">
+        <div class="card-badges">
+          <span class="badge badge-d">英文｜輸入練習</span>
+          <span class="badge">A2 Key 全詞表</span>
+          <span class="badge badge-ok">離線可用</span>
+        </div>
+        <h3><span class="emoji" aria-hidden="true">⌨️</span>場景式英文輸入練習 · A2 Key</h3>
+        <p class="card-sub">60 個生活場景 · 逐字敲出單字、片語與句子</p>
+        <p class="card-desc">
+          把「看得懂」變成「打得出來」。60 個生活場景裡，每一張卡都是一個可以真的用打字機打進去的英文單位，
+          打錯會震動退回、錯三次自動提示並朗讀。
+        </p>
+        <ul class="features">
+          <li><b>5,685 個可練習單元</b>：單字 3,163 筆、片語 840 筆、例句 840 筆，60 個場景分六組（生活主題／文法基礎／動詞／形容詞／名詞／會話表達）</li>
+          <li><b>官方詞表 100% 涵蓋</b>：Cambridge A2 Key Vocabulary List 1713 / 1713 詞全數收錄</li>
+          <li><b>四種練習模式</b>：單字（比字母）、片語（比詞）、句子（逐詞、標點跳過）、盲打整句（不給提示，最接近考試）</li>
+          <li><b>盲打分色標記</b>：以最長公共子序列對齊，綠色正確／紅色打錯／紅色漏打／黃色多打，正確率＝正確字數 ÷ 目標字數</li>
+          <li><b>即時 IPA 音標</b>：單字片語音標為人工撰寫，840 個例句的音標在執行時逐詞組合出來，並處理連續發音修正；任何一個字查不到就整句不顯示</li>
+          <li><b>解析面板</b>：句中每個詞的詞性與中文對照，詞性由官方標註建表 + 上下文判斷（<code>glass</code> 是名詞還是形容詞要看位置）</li>
+          <li><b>錯題本與統計</b>：依累計錯誤次數排序的跨場景錯題本；完成單元數、總字元、平均正確率、練習天數；今日挑戰 20 張、隨機挑戰（沒練過的單元權重 ×3）</li>
+          <li><b>輸入法友善</b>：全形、智慧引號、中文輸入法產生的雜訊一律靜默丟棄，組字中完全不碰輸入框</li>
+        </ul>
+        <div class="card-foot">
+          <a class="btn" href="https://joshua19683721.github.io/m2/" target="_blank" rel="noopener noreferrer">進入系統 ↗</a>
+          <code class="url">joshua19683721.github.io/m2/</code>
+        </div>
+      </article>
+
+      <article class="card" data-tags="英文 打字 輸入 練習 單字 詞組 整句 口袋書 等級 音標 查單字 錯字本 統計">
+        <div class="card-badges">
+          <span class="badge badge-d">英文｜輸入練習</span>
+          <span class="badge">1–6 級</span>
+          <span class="badge badge-ok">離線可用</span>
+        </div>
+        <h3><span class="emoji" aria-hidden="true">🍎</span>場景單字輸入練習 · 英語單字口袋書</h3>
+        <p class="card-sub">21 個生活場景 · 889 條單字 · 1–6 級</p>
+        <p class="card-desc">
+          從國小到國中的單字，一條一條循序漸進：<b>單字 → 詞組 → 整句</b>，
+          每一個步驟的內容都出自同一條條目，不會東拼一句西湊一句。
+        </p>
+        <ul class="features">
+          <li><b>889 條單字 / 3,153 個練習步驟</b>，21 個生活場景分類，可依 1–6 級篩選</li>
+          <li><b>三段式練習</b>：目標單字 → 同句例句裡的另一個字 → 固定詞組 → 完整例句</li>
+          <li><b>音標 100% 覆蓋</b>：889 個單字與全部練習步驟都有 IPA，由 CMUdict 離線換算並把重音標記修到音節開頭</li>
+          <li><b>查單字</b>：889 個單字全部可查，英文、中文、音標、例句都能搜尋，命中處反白；點任一列直接跳到該單字所屬場景開始練習</li>
+          <li><b>錯字本顯示真正打錯的字</b>：不是它所在單元的目標字，而是實際失手那個字自己的中文與音標；點回去會清掉舊答案讓你重打一次</li>
+          <li><b>學習統計</b>：各場景完成度條；進度自動存在瀏覽器，重開接續</li>
+          <li><b>逐條校對</b>：889 條全部逐條檢查過，並修正原書本身的錯誤（如 <code>everyday</code> → <code>every day</code>、chess＝西洋棋）</li>
+          <li><b>繁體稽核</b>：建置流程會掃描整個專案，只要出現一個簡體字就失敗；台灣用語（台灣、吃飯、游泳）不受影響</li>
+        </ul>
+        <div class="card-foot">
+          <a class="btn" href="https://joshua19683721.github.io/m3/" target="_blank" rel="noopener noreferrer">進入系統 ↗</a>
+          <code class="url">joshua19683721.github.io/m3/</code>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============ 學習路徑 ============ -->
+  <section class="category" id="path">
+    <header class="category-head">
+      <h2><span class="cat-icon" aria-hidden="true">🧭</span>建議學習路徑</h2>
+      <p>五套系統可以單獨使用，也可以照著順序組成一個循環。</p>
+    </header>
+
+    <ol class="path">
+      <li>
+        <span class="step-no">1</span>
+        <div>
+          <h3>英文輸入打底</h3>
+          <p>先用 <a href="https://joshua19683721.github.io/m3/" target="_blank" rel="noopener noreferrer">口袋書單字練習</a> 把 1～6 級常用字敲熟，再進 <a href="https://joshua19683721.github.io/m2/" target="_blank" rel="noopener noreferrer">A2 Key 場景練習</a> 把片語與整句補上。</p>
+          <p class="path-note">重點是「打得出來」。看得懂但打不出來的字，寫作時會直接變成空白。</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-no">2</span>
+        <div>
+          <h3>課本式加深</h3>
+          <p>接著用 <a href="https://joshua19683721.github.io/m1/" target="_blank" rel="noopener noreferrer">60 課互動課本</a> 把文法放進故事裡：先讀懂整段文章，再回頭看句中解析。</p>
+          <p class="path-note">遇到錯題或想查某個考點，兩張涵蓋範圍對照表可以直接點回對應課次。</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-no">3</span>
+        <div>
+          <h3>中文閱讀理解</h3>
+          <p>六年級以後進入 <a href="https://joshua19683721.github.io/c1/" target="_blank" rel="noopener noreferrer">ReadExpress-CoT 閱讀快線</a>，每篇文章十階提問，最後收斂成一段閱讀思考拼圖。</p>
+          <p class="path-note">答錯不要急著看下一題——先讀完那張解析卡，這一關的價值都在裡面。</p>
+        </div>
+      </li>
+      <li>
+        <span class="step-no">4</span>
+        <div>
+          <h3>中文寫作思辨</h3>
+          <p>最後用 <a href="https://joshua19683721.github.io/writing_system_framework/" target="_blank" rel="noopener noreferrer">國文會考魔法寫作小幫手</a> 把想法說出來，讓導師追問兩輪，再看診斷卡與成稿。</p>
+          <p class="path-note">寫作卡住時，多半不是詞彙不夠，而是還沒想清楚——這套系統先處理「想清楚」。</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============ 共同原則 ============ -->
+  <section class="category" id="common">
+    <header class="category-head">
+      <h2><span class="cat-icon" aria-hidden="true">🔒</span>共同設計原則</h2>
+      <p>五套系統共同的底線，也是它們可以放心丟給學生用的原因。</p>
+    </header>
+
+    <div class="grid grid-principles">
+      <div class="principle">
+        <h3><span class="emoji" aria-hidden="true">🔌</span>純前端・離線可用</h3>
+        <p>沒有後端、沒有建置步驟、沒有外部相依套件。樣式、腳本、語音都在頁面裡，斷網也能用。</p>
+      </div>
+      <div class="principle">
+        <h3><span class="emoji" aria-hidden="true">🕶️</span>資料留在本機</h3>
+        <p>進度存在瀏覽器 localStorage；語音辨識在本機完成；需要 API Key 的系統，Key 也只存在本機，不上傳任何伺服器。</p>
+      </div>
+      <div class="principle">
+        <h3><span class="emoji" aria-hidden="true">🈶</span>繁體中文・台灣用字</h3>
+        <p>Prompt 與程式雙層把關，建置流程會自動稽核，只要出現一個簡體字就不讓上線；台灣習慣的「台灣、吃飯、游泳」不會被改掉。</p>
+      </div>
+      <div class="principle">
+        <h3><span class="emoji" aria-hidden="true">🧪</span>有測試與資料稽核</h3>
+        <p>詞庫覆蓋率、內容結構、網頁行為都有自動測試；內容與解析邏輯共用同一份來源，不會各自漂移。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 關於 ============ -->
+  <section class="category" id="about">
+    <header class="category-head">
+      <h2><span class="cat-icon" aria-hidden="true">ℹ️</span>關於這個入口</h2>
+    </header>
+    <div class="about">
+      <p>
+        這是一個純靜態的索引頁，只有 <code>index.html</code>、一份樣式表與一支小腳本，
+        透過 GitHub Pages 發佈在 <code>https://joshua19683721.github.io/menu/</code>。
+        它本身沒有任何後端，也不會收集任何資料。
+      </p>
+      <p>
+        五套系統各自是獨立的 repository，內容與部署互不影響；這個頁面只負責分類、說明與導覽。
+        網址尾端的 <code>/c1/</code>、<code>/m1/</code> 等就是各自的 repository 名稱。
+      </p>
+      <p class="muted">
+        詞彙資料來源：Cambridge English, <i>A2 Key / A2 Key for Schools Vocabulary List</i>（© UCLES）。
+        英文例句、故事、中文解析與教學設計為各專案原創。
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <p>教學系統入口 · Joshua19683721</p>
+    <p class="muted">純靜態頁面 · 無追蹤 · 無 Cookie · GitHub Pages</p>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
