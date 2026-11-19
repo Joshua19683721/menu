@@ -26,8 +26,8 @@
   // 以 /panel.html 直接開啟時（預覽 / 手動貼上模式）
   var STANDALONE = false;
   try {
-    STANDALONE = !!(document.currentScript && document.currentScript.hasAttribute('data-standalone')) || HOSTED;
-  } catch (e) { STANDALONE = STANDALONE || HOSTED; }
+    STANDALONE = !!(document.currentScript && document.currentScript.hasAttribute('data-standalone'));
+  } catch (e) {}
 
   /* ============================ 偏好 ============================ */
   var prefs = Object.assign({
@@ -728,12 +728,16 @@
     var c = state.ctx;
 
     if (HOSTED) {
-      // 沒有本機伺服器也沒有左側頁面：燈號代表「金鑰是否設定」
+      // 沒有本機伺服器：燈號代表「金鑰是否設定」
       dot.className = 'dot' + (hostKey() ? ' on' : '');
       if (c && c.text) {
-        ctxLabel.innerHTML = '內容 <b>' + c.text.length + '</b> 字 · ' + esc(c.label || '');
+        ctxLabel.innerHTML = STANDALONE
+          ? '內容 <b>' + c.text.length + '</b> 字 · ' + esc(c.label || '')
+          : '已讀取 <b>' + c.text.length + '</b> 字';
       } else {
-        ctxLabel.innerHTML = '<span class="warn">貼上題目或按「貼上內容」</span>';
+        ctxLabel.innerHTML = STANDALONE
+          ? '<span class="warn">貼上題目或按「貼上內容」</span>'
+          : '<span class="warn">尚未讀取畫面</span>';
       }
       return;
     }
@@ -805,7 +809,7 @@
   }
 
   function emptyState() {
-    chatEl.innerHTML = HOSTED
+    chatEl.innerHTML = (STANDALONE && HOSTED)
       ? '<div class="empty">' +
         '把<b>題目或文章</b>貼在下面（或按上面的 <b>貼上內容</b> 讀剪貼簿），我就直接解題。<br>' +
         '也可以按 <b>解析這題</b>／<b>🧠 思維導圖</b>／<b>🔀 流程圖</b> 讓我整理成圖。' +
