@@ -711,6 +711,22 @@
     }
     if (!text) text = cleanText(document.body.innerText || '');
 
+    // 2.5 有些網站的內容放在同源 iframe 裡（題庫、舊系統、嵌入的閱讀頁）
+    if (text.length < 400) {
+      var frames = document.querySelectorAll('iframe');
+      for (var f = 0; f < frames.length && f < 8; f++) {
+        try {
+          var fdoc = frames[f].contentDocument;
+          if (!fdoc || !fdoc.body) continue;
+          var ft = cleanText(fdoc.body.innerText || '');
+          if (ft.length > Math.max(120, text.length * 2)) {
+            text = ft;
+            best = null;
+          }
+        } catch (e) {}
+      }
+    }
+
     var sel = window.getSelection ? String(window.getSelection()).trim() : '';
     var label = (document.title || '').slice(0, 40) + ' · ' + text.length + ' 字';
     var path = '';
@@ -733,7 +749,7 @@
       if (c && c.text) {
         ctxLabel.innerHTML = STANDALONE
           ? '內容 <b>' + c.text.length + '</b> 字 · ' + esc(c.label || '')
-          : '已讀取 <b>' + c.text.length + '</b> 字';
+          : '已讀取 <b>' + c.text.length + '</b> 字 · ' + esc(shortTitle(document.title));
       } else {
         ctxLabel.innerHTML = STANDALONE
           ? '<span class="warn">貼上題目或按「貼上內容」</span>'
@@ -746,7 +762,7 @@
     dot.className = 'dot' + (on ? ' on' : '');
     if (!c || !c.text) { ctxLabel.innerHTML = '<span class="warn">尚未讀取畫面</span>'; return; }
     ctxLabel.innerHTML = (on ? '已讀取 ' : '內容可能已更新 ') + '<b>' + c.text.length + '</b> 字' +
-      (c.stored ? ' · 記憶區塊' : '');
+      (c.stored ? ' · 記憶區塊' : ' · ' + esc(shortTitle(document.title)));
   }
 
   function refreshCtx(showToast) {
@@ -765,6 +781,53 @@
       toast('抓取失敗：' + e.message);
     }
     return state.ctx;
+  }
+
+  /* ============================ 換頁偵測 ============================ */
+  // SPA 網站（Yahoo 股市、新聞站、影音網站）換頁時不會重新載入頁面，
+  // 書籤注入的面板會留在畫面上、卻還抱著「上一頁」的內容。
+  // 這裡偵測網址／標題變化：舊圖先收起，並自動重讀新的一頁。
+  function watchPage() {
+    if (STANDALONE) return;
+    var lastUrl = location.href;
+    var lastTitle = document.title;
+    var timer = null;
+
+    function reRead(reason) {
+      state.stale = true;
+      if ($('dgm') && !$('dgm').hidden) {
+        closeDgm();
+        toast('頁面換了，舊的圖先收起');
+      }
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        refreshCtx(false);
+        if (reason === 'nav') toast('已重新讀取這一頁 · ' + (state.ctx ? state.ctx.text.length : 0) + ' 字');
+      }, 600);
+    }
+
+    function check() {
+      if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        lastTitle = document.title;
+        reRead('nav');
+        return;
+      }
+      if (document.title !== lastTitle) {
+        lastTitle = document.title;
+        reRead('title');
+      }
+    }
+
+    try {
+      var tEl = document.querySelector('title');
+      if (tEl && window.MutationObserver) {
+        new MutationObserver(check).observe(tEl, { childList: true, characterData: true, subtree: true });
+      }
+    } catch (e) {}
+    window.addEventListener('popstate', check);
+    window.addEventListener('hashchange', check);
+    setInterval(check, 1200);
   }
 
   /* ============================ 對話 ============================ */
@@ -857,6 +920,24 @@
     return null;
   }
 
+  // 每次要用內容時都重新判斷來源：
+  //  - 注入模式（書籤）：永遠重讀「現在這一頁」，不要用上次的快取
+  //    （SPA 換頁、切換股票代號、新聞上/下一篇都不會重新載入，快取會是舊的）
+  //  - 助手頁（全頁模式）：用貼上的內容，沒有就退回剛剛輸入的那一段
+  function currentMaterial() {
+    if (STANDALONE) {
+      if (state.ctx && state.ctx.text) return state.ctx;
+      return hostedMaterial();
+    }
+    return refreshCtx(false);
+  }
+
+  function shortTitle(s) {
+    s = String(s || '').replace(/\s+/g, ' ').trim();
+    if (!s) return '';
+    return s.length > 16 ? s.slice(0, 16) + '…' : s;
+  }
+
   async function send(text) {
     if (state.busy) { stop(); return; }
     var question = String(text == null ? inputEl.value : text).trim();
@@ -867,9 +948,7 @@
     autoGrow();
 
     var useCtx = $('autoCtx').checked;
-    var ctx = HOSTED
-      ? (useCtx && state.ctx && state.ctx.text ? state.ctx : null)
-      : (useCtx ? refreshCtx(false) : state.ctx);
+    var ctx = useCtx ? currentMaterial() : (state.ctx || null);
 
     addMsg('user', question, { ctxLen: useCtx && ctx ? ctx.text.length : 0 });
     state.messages.push({ role: 'user', content: question });
@@ -1766,9 +1845,9 @@
 
   async function loadDiagram() {
     if (dgm.busy) return;
-    var ctx = HOSTED ? hostedMaterial() : refreshCtx(false);
+    var ctx = currentMaterial();
     if (!ctx || !ctx.text) {
-      $('dgmCanvas').innerHTML = HOSTED
+      $('dgmCanvas').innerHTML = STANDALONE
         ? '<div class="err" style="margin:16px">請先在下面貼上文章或題目（或按「貼上內容」），再按圖解。</div>'
         : '<div class="err" style="margin:16px">讀不到左側畫面，請按 ⤴ 重新讀取或先「框選範圍」。</div>';
       return;
@@ -1887,6 +1966,7 @@
   emptyState();
   updateCtxBadge();
   applyWidth(prefs.width);
+  watchPage();
   setTimeout(function () {
     refreshCtx(false);
     loadServerConfig();
