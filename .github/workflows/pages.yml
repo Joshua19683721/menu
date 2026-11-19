@@ -54,6 +54,14 @@ jobs:
           mkdir -p _site
           cp -r index.html assets .nojekyll README.md assistant _site/
 
+      # 擴充功能每次部署都重新打包，避免 repo 裡放著會過期的壓縮檔
+      - name: 打包瀏覽器擴充功能
+        run: |
+          set -euo pipefail
+          cd _site/assistant
+          zip -qr ai-tutor-extension.zip extension
+          unzip -l ai-tutor-extension.zip | head -20
+
       # ---------- 部署 ----------
 
       - name: 設定 Pages

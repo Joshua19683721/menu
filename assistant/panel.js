@@ -12,8 +12,14 @@
   var SELF_SRC = '';
   try { SELF_SRC = (document.currentScript && document.currentScript.src) || ''; } catch (e) {}
 
-  // HOSTED = 沒有本機伺服器，瀏覽器直接呼叫 DeepSeek，金鑰只存在「這台電腦」的 localStorage
-  var HOSTED = !!window.__DS_HOSTED__ ||
+  // EXT = 瀏覽器擴充功能（Chrome / Edge）：金鑰存在擴充功能裡，所有網站共用同一組
+  var EXT = false;
+  try {
+    EXT = !!(window.chrome && chrome.runtime && chrome.runtime.id && chrome.storage && chrome.storage.local);
+  } catch (e) {}
+
+  // HOSTED = 沒有本機伺服器，瀏覽器直接呼叫 DeepSeek
+  var HOSTED = EXT || !!window.__DS_HOSTED__ ||
     /[?&]hosted=1/.test(SELF_SRC) ||
     /(^|\.)github\.io$/.test(location.hostname);
 
@@ -42,18 +48,67 @@
   }, readPrefs());
 
   function readPrefs() {
+    if (EXT) return {};   // 擴充功能模式：偏好存在 chrome.storage，跨網站共用
     try { return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {}; } catch (e) { return {}; }
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
+    if (EXT) saveExt();
   }
   function siteKey() { return location.hostname + location.pathname.split('/').slice(0, 2).join('/'); }
 
+  /* ---- 擴充功能模式：金鑰與偏好存在 chrome.storage.local（只在這台電腦，網站讀不到） ---- */
+  var extState = { cfg: null, ready: false };
+
+  function saveExt() {
+    if (!EXT || !extState.ready) return;   // 還沒讀到舊設定前不要寫，否則會蓋掉金鑰
+    try {
+      chrome.storage.local.set({
+        dsCfg: extState.cfg || {},
+        dsPrefs: {
+          open: prefs.open, push: prefs.push, width: prefs.width,
+          model: prefs.model, baseURL: prefs.baseURL,
+          temperature: prefs.temperature, autoCtx: prefs.autoCtx
+        }
+      });
+    } catch (e) {}
+  }
+
+  function loadExtState() {
+    if (!EXT) return;
+    try {
+      chrome.storage.local.get(['dsCfg', 'dsPrefs'], function (o) {
+        o = o || {};
+        extState.cfg = o.dsCfg || {};
+        extState.ready = true;
+        var p = o.dsPrefs || {};
+        ['open', 'push', 'width', 'model', 'baseURL', 'temperature', 'autoCtx'].forEach(function (k) {
+          if (p[k] !== undefined) prefs[k] = p[k];
+        });
+        applyExtPrefs();
+        updateCtxBadge();
+        loadServerConfig();
+      });
+    } catch (e) {}
+  }
+
+  function applyExtPrefs() {
+    if (!EXT) return;
+    if (!prefs.width) prefs.width = Math.round(Math.min(520, Math.max(360, window.innerWidth * 0.42)));
+    host.style.width = prefs.width + 'px';
+    host.style.display = prefs.open ? 'block' : 'none';
+    if ($('widthVal')) $('widthVal').textContent = prefs.width;
+    applyPush();
+    syncMini();
+  }
+
   /* ---- HOSTED：設定存在這台電腦的瀏覽器，不經過任何伺服器 ---- */
   function readHostCfg() {
+    if (EXT) return extState.cfg || {};
     try { return JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; } catch (e) { return {}; }
   }
   function saveHostCfg(c) {
+    if (EXT) { extState.cfg = c; saveExt(); return; }
     try { localStorage.setItem(CFG_KEY, JSON.stringify(c)); } catch (e) {}
   }
   function hostKey() { return String(readHostCfg().apiKey || '').trim(); }
@@ -1350,13 +1405,14 @@
       $('inTemp').value = prefs.temperature;
       $('tempVal').textContent = prefs.temperature;
       var hk = String(c.apiKey || '');
+      var where = EXT ? '（存在擴充功能，本機所有網站共用）' : '（只存在這台電腦，不會上傳）';
       $('keyState').innerHTML = hk
         ? '<span class="ok">✔ 已設定金鑰</span> ' + esc(hk.slice(0, 6) + '…' + hk.slice(-4)) +
-          '　<span class="hint">（只存在這台電腦，不會上傳）</span>'
-        : '<span class="bad">✘ 尚未設定金鑰</span>　貼上 DeepSeek API Key → 儲存（只留在這台電腦）';
+          '　<span class="hint">' + where + '</span>'
+        : '<span class="bad">✘ 尚未設定金鑰</span>　貼上 DeepSeek API Key → 儲存' + where;
       dot.className = 'dot' + (hk ? ' on' : '');
       $('keybar').hidden = !!hk;
-      $('modelTag').textContent = prefs.model + ' · 直接連線';
+      $('modelTag').textContent = prefs.model + (EXT ? ' · 擴充功能' : ' · 直接連線');
       return;
     }
     try {
@@ -1519,49 +1575,78 @@
       .slice(0, max || 24) || '…';
   }
 
+  var MERMAID_CFG = {
+    startOnLoad: false,
+    theme: 'base',
+    securityLevel: 'loose',
+    fontFamily: '-apple-system,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif',
+    themeVariables: {
+      darkMode: true,
+      background: '#0b0e14',
+      fontSize: '14px',
+      fontFamily: '-apple-system,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif',
+      primaryColor: '#182238',
+      primaryTextColor: '#dbe4f5',
+      primaryBorderColor: '#2f3d58',
+      secondaryColor: '#16203a',
+      tertiaryColor: '#141a24',
+      mainBkg: '#182238',
+      nodeBorder: '#2f3d58',
+      lineColor: '#3a4a6b',
+      textColor: '#dbe4f5',
+      titleColor: '#e7ebf3',
+      edgeLabelBackground: '#0b0e14',
+      clusterBkg: '#0f131b',
+      clusterBorder: '#26324a',
+      cScale0: '#182238', cScale1: '#1a2540', cScale2: '#172137',
+      cScale3: '#1b2744', cScale4: '#16203a', cScale5: '#1a2540',
+      cScale6: '#172137', cScale7: '#1b2744', cScale8: '#16203a', cScale9: '#1a2540',
+      cScale10: '#172137', cScale11: '#1b2744',
+      cScaleInv0: '#dbe4f5', cScaleInv1: '#dbe4f5', cScaleInv2: '#dbe4f5',
+      cScaleInv3: '#dbe4f5', cScaleInv4: '#dbe4f5', cScaleInv5: '#dbe4f5',
+      cScaleInv6: '#dbe4f5', cScaleInv7: '#dbe4f5', cScaleInv8: '#dbe4f5',
+      cScaleInv9: '#dbe4f5', cScaleInv10: '#dbe4f5', cScaleInv11: '#dbe4f5'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 26, rankSpacing: 34 },
+    mindmap: { padding: 12 }
+  };
+
   function ensureMermaid() {
     if (window.mermaid) return Promise.resolve(window.mermaid);
     if (ensureMermaid.p) return ensureMermaid.p;
+
+    // 擴充功能：mermaid 檔案在擴充功能內，請 background 注入到這個頁面的隔離世界
+    if (EXT && chrome.runtime && chrome.runtime.sendMessage) {
+      ensureMermaid.p = new Promise(function (res, rej) {
+        try {
+          chrome.runtime.sendMessage({ type: 'ds-load-mermaid' }, function (resp) {
+            if (chrome.runtime.lastError) { rej(new Error(String(chrome.runtime.lastError.message))); return; }
+            if (!resp || !resp.ok) { rej(new Error('mermaid 載入失敗')); return; }
+            var n = 0;
+            (function wait() {
+              if (window.mermaid) {
+                try {
+                  window.mermaid.initialize(MERMAID_CFG);
+                } catch (e) {}
+                res(window.mermaid);
+                return;
+              }
+              if (++n > 60) { rej(new Error('mermaid 載入逾時')); return; }
+              setTimeout(wait, 100);
+            })();
+          });
+        } catch (e) { rej(e); }
+      });
+      ensureMermaid.p.catch(function () { ensureMermaid.p = null; });
+      return ensureMermaid.p;
+    }
+
     ensureMermaid.p = new Promise(function (res, rej) {
       var s = document.createElement('script');
       s.src = BASE_DIR + 'vendor/mermaid.min.js';
       s.onload = function () {
         try {
-          window.mermaid.initialize({
-            startOnLoad: false,
-            theme: 'base',
-            securityLevel: 'loose',
-            fontFamily: '-apple-system,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif',
-            themeVariables: {
-              darkMode: true,
-              background: '#0b0e14',
-              fontSize: '14px',
-              fontFamily: '-apple-system,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif',
-              primaryColor: '#182238',
-              primaryTextColor: '#dbe4f5',
-              primaryBorderColor: '#2f3d58',
-              secondaryColor: '#16203a',
-              tertiaryColor: '#141a24',
-              mainBkg: '#182238',
-              nodeBorder: '#2f3d58',
-              lineColor: '#3a4a6b',
-              textColor: '#dbe4f5',
-              titleColor: '#e7ebf3',
-              edgeLabelBackground: '#0b0e14',
-              clusterBkg: '#0f131b',
-              clusterBorder: '#26324a',
-              cScale0: '#182238', cScale1: '#1a2540', cScale2: '#172137',
-              cScale3: '#1b2744', cScale4: '#16203a', cScale5: '#1a2540',
-              cScale6: '#172137', cScale7: '#1b2744', cScale8: '#16203a', cScale9: '#1a2540',
-              cScale10: '#172137', cScale11: '#1b2744',
-              cScaleInv0: '#dbe4f5', cScaleInv1: '#dbe4f5', cScaleInv2: '#dbe4f5',
-              cScaleInv3: '#dbe4f5', cScaleInv4: '#dbe4f5', cScaleInv5: '#dbe4f5',
-              cScaleInv6: '#dbe4f5', cScaleInv7: '#dbe4f5', cScaleInv8: '#dbe4f5',
-              cScaleInv9: '#dbe4f5', cScaleInv10: '#dbe4f5', cScaleInv11: '#dbe4f5'
-            },
-            flowchart: { htmlLabels: true, curve: 'basis', padding: 12, nodeSpacing: 26, rankSpacing: 34 },
-            mindmap: { padding: 12 }
-          });
+          window.mermaid.initialize(MERMAID_CFG);
           res(window.mermaid);
         } catch (e) { rej(e); }
       };
@@ -1967,10 +2052,24 @@
   updateCtxBadge();
   applyWidth(prefs.width);
   watchPage();
+
+  // 擴充功能：工具列圖示 / Alt+Q 都會呼叫這裡
+  if (EXT) {
+    try {
+      chrome.runtime.onMessage.addListener(function (msg) {
+        if (!msg) return;
+        if (msg.type === 'ds-toggle') { toggle(); return true; }
+        if (msg.type === 'ds-open') { showPanel(); return true; }
+      });
+    } catch (e) {}
+  }
+
   setTimeout(function () {
     refreshCtx(false);
-    loadServerConfig();
-  }, 300);
+    if (!EXT) loadServerConfig();
+  }, 250);
+
+  if (EXT) loadExtState();
 
   window[NS] = { toggle: toggle, open: showPanel, close: hidePanel, refresh: refreshCtx, state: state, send: send };
 })();

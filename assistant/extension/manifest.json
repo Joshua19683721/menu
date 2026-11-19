@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "AI 解題助手 — 右側面板",
+  "version": "1.0.0",
+  "description": "在任何網頁右側開啟解題助手：解析題目、思維導圖、流程圖。Alt+Q 顯示／隱藏；API Key 只存在這台電腦，所有網站共用一組。",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "AI 解題助手（Alt+Q 顯示／隱藏）"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_matches": [
+        "https://joshua19683721.github.io/menu/assistant/*",
+        "http://127.0.0.1:8791/",
+        "http://127.0.0.1:8791/index.html*",
+        "http://127.0.0.1:8791/panel.html*"
+      ],
+      "js": ["panel.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}
