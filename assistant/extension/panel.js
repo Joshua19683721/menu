@@ -166,7 +166,11 @@
     '5. 完全依照畫面內容作答，不要自己編造選項或題目；資料不足時明確說「畫面資訊不足」。',
     '6. 最後用一行「💡 小訣竅：」給一個好記的方法。',
     '7. 回答長度控制在 400 字以內，除非使用者要求更詳細。',
-    '8. 如果使用者只是問一個概念，就正常教學回答，不要硬套解題格式。'
+    '8. 如果使用者只是問一個概念，就正常教學回答，不要硬套解題格式。',
+    '9. 左側內容可能夾帶網站的頁首、頁尾、導覽列、廣告、公告或「關於本站／頻道簡介」；' +
+      '只採用跟這份題目／文章有關的部分，不要把頁尾簡介當成課文內容來翻譯或解讀。',
+    '10. 如果左側主要是圖片（課本圖片、圖表、照片）而可讀文字很少，' +
+      '直接說「這一頁主要是圖片，我只能讀到這些文字：…」，不要憑空猜圖裡的內容。'
   ].join('\n');
 
   var QUICK = [
@@ -214,6 +218,8 @@
   .ctxbar { display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: #0f131b; border-bottom: 1px solid #1b2130; font-size: 11.5px; color: #97a1b5; }
   .ctxbar b { color: #c9d3e6; font-weight: 600; }
   .ctxbar .warn { color: #ffb86b; }
+  #ctxLabel { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ctxbar .mini { flex: 0 0 auto; }
   .mini {
     padding: 3px 8px; border-radius: 6px; font-size: 11.5px; color: #a9b6cd;
     border: 1px solid #232a38; background: #141a24;
@@ -648,6 +654,81 @@
     }
   }];
 
+  // 這一份用在「把文字抓出來」時要剔除的區塊：頁首、頁尾、導覽、側欄、廣告、相關文章…
+  // （刻意不剔除 modal / popup，有些網站的內容就跑在彈窗裡）
+  var STRIP_RE = /(^|[-_ ])(footer|foot|header|head|nav|navbar|navigation|menu|sidebar|side-bar|breadcrumb|breadcrumbs|pagination|pager|toolbar|advert|advertisement|ads?|promo|share|social|comment|comments|related|subscribe|newsletter|banner|cookie)([-_ ]|$)/i;
+
+  function isStrip(el) {
+    if (!el || el.nodeType !== 1) return false;
+    var tag = el.tagName;
+    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'LINK' || tag === 'META') return true;
+    if (tag === 'NAV' || tag === 'HEADER' || tag === 'FOOTER' || tag === 'ASIDE' || tag === 'MENU') return true;
+    var role = el.getAttribute && el.getAttribute('role');
+    if (role && /navigation|banner|contentinfo|complementary|search|menu/i.test(role)) return true;
+    if (el.getAttribute && el.getAttribute('aria-hidden') === 'true') return true;
+    var cls = typeof el.className === 'string' ? el.className : '';
+    var sig = (cls + ' ' + (el.id || '')).trim();
+    if (sig && STRIP_RE.test(sig)) return true;
+    return false;
+  }
+
+  var BLOCK_TAGS = {
+    P: 1, DIV: 1, SECTION: 1, ARTICLE: 1, LI: 1, UL: 1, OL: 1, TR: 1, TD: 1, TH: 1,
+    H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1, TABLE: 1, BLOCKQUOTE: 1, PRE: 1, DD: 1, DT: 1, FIGCAPTION: 1
+  };
+
+  // 只取「畫面上看得到、且不屬於頁首頁尾導覽」的文字
+  function visibleText(root, cap) {
+    if (!root) return '';
+    cap = cap || 12000;
+    var out = [], total = 0, lastBlock = null;
+
+    var walker;
+    var sx = window.scrollX || window.pageXOffset || 0;
+    var sy = window.scrollY || window.pageYOffset || 0;
+    try {
+      walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          if (n.nodeType === 1) {
+            if (isStrip(n)) return NodeFilter.FILTER_REJECT;
+            try {
+              if (n.checkVisibility && !n.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) {
+                return NodeFilter.FILTER_REJECT;
+              }
+              // 常見的「藏起來的題庫」手法：把內容移到畫面外（left:-9999px 等）
+              // 用文件座標判斷，才不會因為使用者往下捲就漏掉上面的文章
+              var r = n.getBoundingClientRect();
+              if (r.width > 0 && r.height > 0) {
+                if (r.left + sx + r.width <= 0) return NodeFilter.FILTER_REJECT;
+                if (r.top + sy + r.height <= 0) return NodeFilter.FILTER_REJECT;
+              }
+            } catch (e) {}
+            return NodeFilter.FILTER_SKIP;
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+    } catch (e) {
+      return cleanText(root.innerText || root.textContent || '').slice(0, cap);
+    }
+
+    var node;
+    while ((node = walker.nextNode())) {
+      var t = (node.nodeValue || '').replace(/[\t\u00a0]+/g, ' ');
+      if (!t.trim()) continue;
+
+      var blk = node.parentNode;
+      while (blk && blk.nodeType === 1 && !BLOCK_TAGS[blk.tagName]) blk = blk.parentNode;
+      if (lastBlock && blk !== lastBlock) out.push('\n');
+      lastBlock = blk;
+
+      out.push(t);
+      total += t.length;
+      if (total >= cap) break;
+    }
+    return cleanText(out.join('')).slice(0, cap);
+  }
+
   function isBad(el) {
     if (!el || !el.tagName) return true;
     var tag = el.tagName.toLowerCase();
@@ -727,44 +808,69 @@
       } catch (e) {}
     }
 
-    // 2. 自動判斷主內容區
-    var nodes = document.querySelectorAll('main,[role=main],article,section,div,form,td');
-    var best = null, bestScore = 0;
-    var limit = Math.min(nodes.length, 2500);
-    for (var i = 0; i < limit; i++) {
-      var el = nodes[i];
-      if (isBad(el)) continue;
-      var len = (el.textContent || '').length;
-      if (len < 80 || len > 200000) continue;
-      var linkLen = 0;
-      var as = el.getElementsByTagName('a');
-      for (var j = 0; j < as.length && j < 60; j++) linkLen += (as[j].textContent || '').length;
-      var score = len - 2 * linkLen;
-      if (score > bestScore) { bestScore = score; best = el; }
+    // 2. 先看有沒有語意上的主內容區（main / article / role=main）
+    var preferred = [];
+    ['main', '[role="main"]', 'article'].forEach(function (sel) {
+      try {
+        Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) {
+          if (preferred.indexOf(el) < 0 && !isBad(el)) preferred.push(el);
+        });
+      } catch (e) {}
+    });
+
+    var best = null;
+    var text = '';
+    var prefBest = null, prefLen = 0;
+    for (var p = 0; p < preferred.length && p < 6; p++) {
+      var pt = visibleText(preferred[p], 12000);
+      if (pt.length > prefLen) { prefLen = pt.length; prefBest = preferred[p]; text = pt; }
+    }
+    if (prefLen < 200) { text = ''; prefBest = null; }
+
+    // 3. 沒有明確主內容 → 用「字多、連結少」的區塊
+    if (!text) {
+      var nodes = document.querySelectorAll('section,div,td,form');
+      var bestScore = 0;
+      var limit = Math.min(nodes.length, 2500);
+      for (var i = 0; i < limit; i++) {
+        var el = nodes[i];
+        if (isBad(el)) continue;
+        var len = (el.textContent || '').length;
+        if (len < 80 || len > 200000) continue;
+        var linkLen = 0;
+        var as = el.getElementsByTagName('a');
+        for (var j = 0; j < as.length && j < 60; j++) linkLen += (as[j].textContent || '').length;
+        var score = len - 2 * linkLen;
+        if (score > bestScore) { bestScore = score; best = el; }
+      }
+
+      if (best) {
+        // 往內收斂到「分數接近的最大子區塊」，避免抓到整頁外殼
+        var cur = best;
+        for (var k = 0; k < 6; k++) {
+          var bestChild = null, bestChildScore = 0;
+          for (var c = 0; c < cur.children.length; c++) {
+            var ch = cur.children[c];
+            if (isBad(ch)) continue;
+            var tl = (ch.textContent || '').length;
+            if (tl < 120) continue;
+            var ll = 0, ca = ch.getElementsByTagName('a');
+            for (var q = 0; q < ca.length && q < 40; q++) ll += (ca[q].textContent || '').length;
+            var sc = tl - 2 * ll;
+            if (sc > bestChildScore) { bestChildScore = sc; bestChild = ch; }
+          }
+          if (bestChild && bestChildScore >= bestScore * 0.82) { cur = bestChild; } else break;
+        }
+        best = cur;
+        text = visibleText(cur, 12000);
+        if (text.length < 60) text = visibleText(best, 12000);
+      }
     }
 
-    var text = '';
-    if (best) {
-      // 往內收斂到「分數接近的最大子區塊」，避免抓到整頁外殼
-      var cur = best;
-      for (var k = 0; k < 6; k++) {
-        var bestChild = null, bestChildScore = 0;
-        for (var c = 0; c < cur.children.length; c++) {
-          var ch = cur.children[c];
-          if (isBad(ch)) continue;
-          var tl = (ch.textContent || '').length;
-          if (tl < 120) continue;
-          var ll = 0, ca = ch.getElementsByTagName('a');
-          for (var q = 0; q < ca.length && q < 40; q++) ll += (ca[q].textContent || '').length;
-          var sc = tl - 2 * ll;
-          if (sc > bestChildScore) { bestChildScore = sc; bestChild = ch; }
-        }
-        if (bestChild && bestChildScore >= bestScore * 0.82) { cur = bestChild; } else break;
-      }
-      text = cleanText(cur.innerText || cur.textContent || '');
-      if (text.length < 60) text = cleanText(best.innerText || '');
+    if (text.length < 60) {
+      text = visibleText(document.body, 12000);
+      best = null;
     }
-    if (!text) text = cleanText(document.body.innerText || '');
 
     // 2.5 有些網站的內容放在同源 iframe 裡（題庫、舊系統、嵌入的閱讀頁）
     if (text.length < 400) {
@@ -783,16 +889,35 @@
     }
 
     var sel = window.getSelection ? String(window.getSelection()).trim() : '';
+
+    // 這一頁是不是「以圖片為主」（課本圖片、圖表）：文字很少但有幾張大圖
+    var bigImgs = 0;
+    if (text.length < 900) {
+      try {
+        var imgs = document.querySelectorAll('img,svg,canvas');
+        for (var im = 0; im < imgs.length && im < 40; im++) {
+          var ir = imgs[im].getBoundingClientRect();
+          if (ir.width >= 200 && ir.height >= 140) bigImgs++;
+        }
+      } catch (e) {}
+    }
+
     var label = (document.title || '').slice(0, 40) + ' · ' + text.length + ' 字';
     var path = '';
-    try { path = best ? cssPath(best) : ''; } catch (e) { path = ''; }
-    return { text: text, label: label, sel: path, selection: sel };
+    try { path = prefBest ? cssPath(prefBest) : (best ? cssPath(best) : ''); } catch (e) { path = ''; }
+    return { text: text, label: label, sel: path, selection: sel, bigImgs: bigImgs };
   }
 
   function clip(t) {
     t = String(t || '');
     if (t.length <= 20000) return t;
     return t.slice(0, 14000) + '\n\n……（內容過長，中間省略）……\n\n' + t.slice(-5000);
+  }
+
+  function snip(t) {
+    t = String(t || '').replace(/\s+/g, ' ').trim();
+    if (!t) return '';
+    return t.length > 14 ? t.slice(0, 14) + '…' : t;
   }
 
   function updateCtxBadge() {
@@ -802,9 +927,13 @@
       // 沒有本機伺服器：燈號代表「金鑰是否設定」
       dot.className = 'dot' + (hostKey() ? ' on' : '');
       if (c && c.text) {
-        ctxLabel.innerHTML = STANDALONE
-          ? '內容 <b>' + c.text.length + '</b> 字 · ' + esc(c.label || '')
-          : '已讀取 <b>' + c.text.length + '</b> 字 · ' + esc(shortTitle(document.title));
+        if (STANDALONE) {
+          ctxLabel.innerHTML = '內容 <b>' + c.text.length + '</b> 字 · ' + esc(c.label || '');
+        } else {
+          ctxLabel.innerHTML = '已讀取 <b>' + c.text.length + '</b> 字 · 「' + esc(snip(c.text)) + '」' +
+            (c.bigImgs ? ' · 主要是圖片' : '');
+          ctxLabel.title = (document.title || '') + '\n' + (c.label || '');
+        }
       } else {
         ctxLabel.innerHTML = STANDALONE
           ? '<span class="warn">貼上題目或按「貼上內容」</span>'
@@ -816,8 +945,9 @@
     var on = c && c.text && !state.stale;
     dot.className = 'dot' + (on ? ' on' : '');
     if (!c || !c.text) { ctxLabel.innerHTML = '<span class="warn">尚未讀取畫面</span>'; return; }
-    ctxLabel.innerHTML = (on ? '已讀取 ' : '內容可能已更新 ') + '<b>' + c.text.length + '</b> 字' +
-      (c.stored ? ' · 記憶區塊' : ' · ' + esc(shortTitle(document.title)));
+    ctxLabel.innerHTML = (on ? '已讀取 ' : '內容可能已更新 ') + '<b>' + c.text.length + '</b> 字 · 「' +
+      esc(snip(c.text)) + '」' + (c.bigImgs ? ' · 主要是圖片' : '') + (c.stored ? ' · 記憶區塊' : '');
+    ctxLabel.title = (document.title || '') + '\n' + (c.label || '');
   }
 
   function refreshCtx(showToast) {
@@ -958,6 +1088,10 @@
     if (ctx && ctx.text && last && last.role === 'user') {
       last.content = '【左側畫面內容（' + (ctx.label || '') + '）】\n' + clip(ctx.text) +
         '\n\n【我的問題】\n' + question;
+      if (ctx.bigImgs) {
+        last.content += '\n\n【提醒】這一頁有大張圖片（課本圖片或圖表）。上面只有「頁面上可讀的文字」，' +
+          '圖片裡的內容我看不到；如果題目在圖片裡，請直接說明或請使用者框選／打字。';
+      }
       if (ctx.selection && ctx.selection.length > 20 && ctx.selection.length < ctx.text.length) {
         last.content += '\n\n【我特別選取的片段】\n' + ctx.selection.slice(0, 2000);
       }
