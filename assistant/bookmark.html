@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>安裝書籤小工具｜AI 學習助手</title>
+<meta name="description" content="把 AI 學習助手變成書籤：在任何題目網頁按一下，右側就出現解題面板。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 40px 20px;
+    background: radial-gradient(1200px 600px at 50% -10%, #16203a 0%, #080a0f 60%);
+    color: #dbe4f5;
+    font: 400 15px/1.8 -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .01em; }
+  .sub { color: #8e9ab1; margin: 0 0 26px; font-size: 14px; }
+  .card {
+    background: #10141d; border: 1px solid #232a38; border-radius: 14px;
+    padding: 20px 22px; margin-bottom: 16px;
+  }
+  h2 { font-size: 14.5px; margin: 0 0 10px; color: #cfe0ff; }
+  p { margin: 0 0 10px; }
+  .muted { color: #8e9ab1; font-size: 13.5px; }
+  .bm-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 6px; }
+  .bm {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; border-radius: 11px; text-decoration: none;
+    background: linear-gradient(135deg, #5b8cff, #7b6cf6); color: #fff;
+    font-weight: 700; font-size: 14.5px; box-shadow: 0 8px 24px rgba(91,140,255,.35);
+    cursor: grab; border: 1px solid rgba(255,255,255,.18);
+  }
+  .bm:active { cursor: grabbing; }
+  code, textarea {
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+  }
+  code { background: #0b0e14; padding: 2px 6px; border-radius: 6px; color: #9fd0ff; }
+  ol { padding-left: 20px; margin: 8px 0 0; }
+  li { margin-bottom: 6px; }
+  button.copy {
+    padding: 10px 16px; border-radius: 10px; border: 1px solid #2f3d58;
+    background: #141a24; color: #cfe0ff; font: inherit; font-size: 13.5px; cursor: pointer;
+  }
+  button.copy:hover { border-color: #5b8cff; }
+  textarea {
+    width: 100%; height: 92px; margin-top: 10px; padding: 10px; border-radius: 10px;
+    background: #0b0e14; color: #9fb3d0; border: 1px solid #232a38; resize: vertical;
+  }
+  .back { display: inline-block; margin-top: 22px; color: #8e9ab1; text-decoration: none; font-size: 13.5px; }
+  .back:hover { color: #cfe0ff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🤖 安裝「AI 解題」書籤</h1>
+  <p class="sub">在任何題目網頁按一下書籤，右側就會出現解題面板，直接讀那一頁的文章與題目。</p>
+
+  <div class="card">
+    <h2>① 把按鈕拖到書籤列</h2>
+    <div class="bm-row">
+      <a class="bm" id="bm" href="#">🤖 AI 解題</a>
+      <span class="muted">用滑鼠按住，拖到瀏覽器書籤列</span>
+    </div>
+    <p class="muted">書籤列沒開：按 <code>Ctrl</code>+<code>Shift</code>+<code>B</code>。Mac 是 <code>⌘</code>+<code>Shift</code>+<code>B</code>。</p>
+    <p class="muted">不能拖的話：按下面的「複製書籤程式碼」→ 書籤列按右鍵 →「新增書籤」→ 名稱填 <b>AI 解題</b> → 網址貼上。</p>
+    <div class="bm-row">
+      <button class="copy" id="copy">複製書籤程式碼</button>
+      <span class="muted" id="copied"></span>
+    </div>
+    <textarea id="code" readonly spellcheck="false"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>② 第一次使用要貼 API Key</h2>
+    <ol>
+      <li>到任何題目網頁，按一下書籤列的「AI 解題」。</li>
+      <li>右側面板右上角 <b>⚙</b> → 貼上 DeepSeek API Key（<code>sk-…</code>）→ 儲存。</li>
+      <li>按「測試連線」看到 ✔ 就連線成功。</li>
+    </ol>
+    <p class="muted" style="margin-top:12px">
+      金鑰只寫進<b>這台電腦、這個網站</b>的 localStorage，不會上傳到任何伺服器。
+      換一台電腦、或換一個網站使用時，要再貼一次（每台電腦各自保存）。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>③ 不用書籤也可以</h2>
+    <p>直接開 <a href="./" style="color:#9fd0ff">助手頁面</a>，把題目或文章貼進去就能用，同樣是金鑰存在本機。</p>
+  </div>
+
+  <a class="back" href="../">← 回到教學系統入口</a>
+</div>
+
+<script>
+(function () {
+  var BASE = location.href.replace(/[^/]*$/, '');
+  var CODE = "javascript:(function(){" +
+    "if(window.__DS_TUTOR__){window.__DS_TUTOR__.toggle();return;}" +
+    "var s=document.createElement('script');" +
+    "s.src='" + BASE + "panel.js?hosted=1&t='+Date.now();" +
+    "s.onerror=function(){" +
+      "var w=Math.min(560,Math.round(screen.availWidth/2));" +
+      "window.open('" + BASE + "','dsTutor','width='+w+',height='+screen.availHeight+',left='+(screen.availWidth-w)+',top=0');" +
+    "};" +
+    "document.documentElement.appendChild(s);})();";
+
+  document.getElementById('bm').setAttribute('href', CODE);
+  document.getElementById('code').value = CODE;
+
+  document.getElementById('copy').onclick = function () {
+    var ta = document.getElementById('code');
+    ta.select();
+    ta.setSelectionRange(0, 99999);
+    var done = function () { document.getElementById('copied').textContent = '已複製 ✓'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(CODE).then(done, function () { document.execCommand('copy'); done(); });
+    } else {
+      document.execCommand('copy'); done();
+    }
+  };
+})();
+</script>
+</body>
+</html>
