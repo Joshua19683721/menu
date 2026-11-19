@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site
-          cp -r index.html assets .nojekyll README.md _site/
+          cp -r index.html assets .nojekyll README.md assistant _site/
 
       # ---------- 部署 ----------
 
