@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -65,6 +66,23 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+      # artifact 上傳完成後，API 有時還查不到（deploy-pages 會立刻查詢而失敗）
+      # 這裡先等到 artifact 真的出現，再交給 deploy-pages。
+      - name: 等待 artifact 就緒
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 24); do
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" \
+                  --jq '[.artifacts[] | select(.name=="github-pages")] | length')
+            echo "第 $i 次查詢：github-pages artifact = $n"
+            if [ "$n" -ge 1 ]; then exit 0; fi
+            sleep 5
+          done
+          echo "::error::等不到 github-pages artifact"
+          exit 1
 
       - name: 部署
         id: deployment
