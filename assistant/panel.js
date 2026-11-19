@@ -726,6 +726,18 @@
 
   function updateCtxBadge() {
     var c = state.ctx;
+
+    if (HOSTED) {
+      // 沒有本機伺服器也沒有左側頁面：燈號代表「金鑰是否設定」
+      dot.className = 'dot' + (hostKey() ? ' on' : '');
+      if (c && c.text) {
+        ctxLabel.innerHTML = '內容 <b>' + c.text.length + '</b> 字 · ' + esc(c.label || '');
+      } else {
+        ctxLabel.innerHTML = '<span class="warn">貼上題目或按「貼上內容」</span>';
+      }
+      return;
+    }
+
     var on = c && c.text && !state.stale;
     dot.className = 'dot' + (on ? ' on' : '');
     if (!c || !c.text) { ctxLabel.innerHTML = '<span class="warn">尚未讀取畫面</span>'; return; }
